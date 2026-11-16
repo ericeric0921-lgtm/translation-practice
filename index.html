@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="翻譯刷題">
+<meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171b" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>翻譯刷題</title>
+<style>
+:root{
+  --bg:#f5f3ee; --card:#ffffff; --ink:#1d1f23; --muted:#6b6f78; --line:#e4e1d9;
+  --accent:#2f6f5e; --accent-ink:#fff; --accent-soft:#e3efe9;
+  --ok:#2f8a4f; --ok-soft:#e2f2e7; --part:#b7791f; --part-soft:#fbf0dc; --bad:#c2453a; --bad-soft:#f9e3e0;
+  --sel:#2f6f5e; --miss:#d69e2e;
+  --radius:16px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15171b; --card:#1f2228; --ink:#eceef1; --muted:#9aa0aa; --line:#2e323a;
+    --accent:#5fb39a; --accent-ink:#0f1a16; --accent-soft:#1f3530;
+    --ok:#5cc184; --ok-soft:#1d3226; --part:#e0a84a; --part-soft:#382d1a; --bad:#ec7468; --bad-soft:#3a2120;
+    --sel:#5fb39a; --miss:#e0a84a; --shadow:none;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 84px);
+  max-width:640px;margin:0 auto;-webkit-text-size-adjust:100%}
+h1{font-size:22px;margin:4px 0 12px}
+h3{font-size:15px;margin:0 0 8px;color:var(--muted);font-weight:600}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:110px;line-height:1.5}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:600;text-align:center}
+.btn:active{opacity:.85}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.soft{background:var(--accent-soft);color:var(--accent)}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.small{font-size:13px;color:var(--muted)}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+
+/* today */
+.today{display:flex;align-items:center;gap:14px}
+.ring{width:58px;height:58px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:13px}
+.today .t1{font-weight:700;font-size:17px}
+.streak{margin-left:auto;text-align:right;font-size:13px;color:var(--muted)}
+.streak b{display:block;font-size:20px;color:var(--ink)}
+
+/* segmented */
+.seg{display:flex;background:var(--line);border-radius:11px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;padding:7px 0;border-radius:9px;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+.meta{font-size:13px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tag{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 7px;font-weight:600}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.part{background:var(--part-soft);color:var(--part)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.zh{font-size:19px;line-height:1.7;margin:0 0 14px;font-weight:500}
+.partner{font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:-4px 0 14px}
+
+.mine{white-space:pre-wrap;margin:0 0 14px}
+.ref{line-height:2.1;margin:0}
+.w{display:inline;padding:3px 2px;border-radius:6px;cursor:pointer}
+.w.miss{text-decoration:underline;text-decoration-color:var(--miss);text-decoration-thickness:2px;text-underline-offset:4px}
+.w.sel{background:var(--sel);color:var(--accent-ink)}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{font-style:normal;text-decoration:underline;text-decoration-color:var(--miss);text-decoration-thickness:2px;text-underline-offset:3px}
+
+.add{border:1.5px dashed var(--accent);background:var(--accent-soft)}
+.add input{margin-bottom:8px}
+.grade{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grade button{padding:12px 4px;border-radius:12px;font-weight:600;font-size:15px}
+.g-ok{background:var(--ok-soft);color:var(--ok)}.g-part{background:var(--part-soft);color:var(--part)}.g-bad{background:var(--bad-soft);color:var(--bad)}
+.links{display:flex;gap:8px;margin:10px 0 12px}
+.links button{flex:1;font-size:14px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--accent);font-weight:600}
+
+/* cards */
+.clist{list-style:none;margin:0;padding:0}
+.clist li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.clist li:first-child{border-top:0}
+.clist .t{font-weight:600}
+.clist .d{font-size:14px;color:var(--muted)}
+.clist .x{color:var(--muted);font-size:20px;line-height:1;padding:2px 6px;margin-left:auto}
+.badge{font-size:11px;border-radius:5px;padding:0 5px;background:var(--line);color:var(--muted);margin-left:6px;vertical-align:2px}
+pre.out{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.5 ui-monospace,Menlo,monospace;max-height:180px;overflow:auto;margin:0 0 10px}
+
+/* bank */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.stats b{display:block;font-size:20px}
+.stats span{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.grid button{aspect-ratio:1;border-radius:6px;font-size:11px;background:var(--bg);border:1px solid var(--line);color:var(--muted);padding:0}
+.grid button.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.grid button.part{background:var(--part-soft);color:var(--part);border-color:transparent}
+.grid button.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.grid .sec{grid-column:1/-1;aspect-ratio:auto;font-size:12px;text-align:left;border:0;background:none;padding:8px 0 2px;font-weight:600}
+
+/* settings */
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:22px;font-weight:700}
+.stepper input{text-align:center;font-size:20px;font-weight:700;width:90px;flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chips button{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px;background:var(--card)}
+.chips button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+label.sw{display:flex;align-items:center;justify-content:space-between;gap:12px}
+label.sw input{width:auto;transform:scale(1.3)}
+
+/* tabbar */
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:color-mix(in srgb,var(--card) 92%,transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  padding:6px 8px calc(env(safe-area-inset-bottom) + 6px);z-index:10}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px 0}
+nav button svg{width:24px;height:24px}
+nav button.on{color:var(--accent);font-weight:600}
+nav .cnt{position:absolute;margin-left:22px;margin-top:-2px;background:var(--bad);color:#fff;border-radius:999px;font-size:10px;padding:0 5px;min-width:16px;line-height:16px}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;transition:.25s;pointer-events:none;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;color:var(--muted);padding:20px 0}
+</style>
+</head>
+<body>
+
+<main id="view"></main>
+
+<nav id="tabs">
+  <button data-tab="practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>練習</button>
+  <button data-tab="cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 6V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></svg>字卡<span class="cnt hidden" id="cardCnt"></span></button>
+  <button data-tab="bank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>題庫</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>設定</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="questions.js"></script>
+<script>
+"use strict";
+const KEY = 'translation-practice-v1';
+const Q = QUESTIONS;
+const byId = Object.fromEntries(Q.map(q => [q.id, q]));
+
+/* ---------- state ---------- */
+function defaults(){ return {v:1, goal:10, order:'seq', withEx:true, rec:{}, daily:{}, cards:[], cur:null}; }
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.v===1) return Object.assign(defaults(), s); }catch(e){}
+  return defaults();
+}
+let S = load();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+const pad = n => String(n).padStart(2,'0');
+const dkey = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => dkey(new Date());
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clean = s => String(s||'').replace(/[\t\r\n]+/g,' ').trim();
+const norm = w => w.toLowerCase().replace(/[’]/g,"'").replace(/^[^a-z0-9]+|[^a-z0-9]+$/g,'');
+
+function doneToday(){ return S.daily[today()] || 0; }
+function streak(){
+  let n = 0; const d = new Date();
+  if((S.daily[dkey(d)]||0) < S.goal) d.setDate(d.getDate()-1); // today not finished yet doesn't break it
+  while((S.daily[dkey(d)]||0) >= S.goal){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+const groupOf = id => Math.ceil(id/2);
+const partnerOf = id => id % 2 ? id+1 : id-1;
+
+/* ---------- toast ---------- */
+let tt;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ---------- copy ---------- */
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }catch(e){}
+  const ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} ta.remove(); return ok;
+}
+
+/* ---------- picking questions ---------- */
+function pickNext(mode){
+  const unseen = Q.filter(q => !S.rec[q.id]);
+  if(mode==='review'){
+    const wrong = Q.filter(q => S.rec[q.id] && S.rec[q.id].st!=='ok')
+                   .sort((a,b)=> (S.rec[a.id].last||'').localeCompare(S.rec[b.id].last||'') || a.id-b.id);
+    return wrong.length ? wrong[0].id : null;
+  }
+  if(mode==='rand'){
+    const pool = unseen.length ? unseen : Q;
+    return pool[Math.floor(Math.random()*pool.length)].id;
+  }
+  if(unseen.length) return unseen[0].id;
+  const notOk = Q.find(q => S.rec[q.id].st!=='ok');
+  return notOk ? notOk.id : 1;
+}
+function ensureCur(){
+  if(S.cur && byId[S.cur.id]) return;
+  const id = pickNext(S.order);
+  S.cur = id ? {id, ans:'', shown:false} : null;
+  save();
+}
+
+/* ---------- render ---------- */
+let tab = 'practice';
+const view = document.getElementById('view');
+
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+  const fresh = S.cards.filter(c=>!c.x).length;
+  const cc = document.getElementById('cardCnt'); cc.textContent=fresh; cc.classList.toggle('hidden', !fresh);
+  ({practice:renderPractice, cards:renderCards, bank:renderBank, settings:renderSettings})[tab]();
+  window.scrollTo(0,0);
+}
+
+function todayCard(){
+  const n = doneToday(), g = S.goal, p = Math.min(1, n/g), C = 2*Math.PI*24;
+  const met = n >= g;
+  return `<div class="card today">
+    <div class="ring"><svg width="58" height="58"><circle cx="29" cy="29" r="24" fill="none" stroke="var(--line)" stroke-width="6"/>
+      <circle cx="29" cy="29" r="24" fill="none" stroke="${met?'var(--ok)':'var(--accent)'}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}"/></svg><b>${Math.round(p*100)}%</b></div>
+    <div><div class="t1">今日 ${n} / ${g} 題</div><div class="small">${met ? '今日目標達成 🎉 想多練也可以繼續' : `還差 ${g-n} 題`}</div></div>
+    <div class="streak"><b>🔥 ${streak()}</b>連續天數</div>
+  </div>`;
+}
+
+function renderPractice(){
+  ensureCur();
+  let h = todayCard();
+  h += `<div class="seg" id="mode">
+    <button data-m="seq" class="${S.order==='seq'?'on':''}">依序</button>
+    <button data-m="rand" class="${S.order==='rand'?'on':''}">隨機</button>
+    <button data-m="review" class="${S.order==='review'?'on':''}">錯題複習</button></div>`;
+
+  if(!S.cur){
+    h += `<div class="card empty">目前沒有錯題要複習 👍<br><br><button class="btn soft" id="toSeq">回到依序練習</button></div>`;
+    view.innerHTML = h;
+    bindMode(); document.getElementById('toSeq').onclick=()=>{S.order='seq'; save(); render();};
+    return;
+  }
+
+  const q = byId[S.cur.id], r = S.rec[q.id], pq = byId[partnerOf(q.id)];
+  const stTag = r ? `<span class="tag ${r.st}">${{ok:'答對過',part:'小錯過',bad:'錯過'}[r.st]} ×${r.n}</span>` : '';
+  h += `<div class="card">
+    <div class="meta"><span class="tag">#${q.id}</span><span>第 ${groupOf(q.id)} 組 · ${q.id%2?'第一句':'第二句'}</span>${stTag}</div>
+    ${q.id%2===0 && pq ? `<div class="partner">上一句：${esc(pq.zh)}</div>` : ''}
+    <p class="zh">${esc(q.zh)}</p>`;
+
+  if(!S.cur.shown){
+    h += `<textarea id="ans" placeholder="寫下你的英文翻譯…" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">${esc(S.cur.ans)}</textarea>
+      <div style="height:10px"></div>
+      <button class="btn" id="reveal">對答案</button>
+      <div style="height:8px"></div>
+      <button class="btn ghost" id="skip">跳過這題</button></div>`;
+    view.innerHTML = h; bindMode();
+    const ta = document.getElementById('ans');
+    ta.oninput = () => { S.cur.ans = ta.value; save(); };
+    document.getElementById('reveal').onclick = () => { S.cur.ans = ta.value; S.cur.shown = true; save(); renderPractice(); };
+    document.getElementById('skip').onclick = () => { S.cur = null; ensureSkip(q.id); render(); };
+    return;
+  }
+
+  // revealed
+  const mine = S.cur.ans.trim();
+  const mineSet = new Set(mine.split(/\s+/).map(norm).filter(Boolean));
+  const words = q.en.split(/\s+/);
+  const refHtml = words.map((w,i)=>{
+    const miss = mine && !mineSet.has(norm(w)) && norm(w);
+    return `<span class="w${miss?' miss':''}" data-i="${i}">${esc(w)}</span>`;
+  }).join(' ');
+
+  h += `<h3>你的答案</h3><p class="mine">${mine ? esc(mine) : '<span class="muted">（沒有作答）</span>'}</p>
+    <h3>參考答案</h3><p class="ref" id="ref">${refHtml}</p>
+    <div class="legend">${mine?'<i>底線</i>＝你的答案裡沒有的字 · ':''}點單字可選取，連續點多個可組成片語</div>
+  </div>
+
+  <div class="card add hidden" id="addBox">
+    <h3>加入字卡</h3>
+    <input id="term" placeholder="單字或片語（英文）" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+    <input id="mean" placeholder="中文意思（可留空，會用題目中文當提示）" autocomplete="off">
+    <div class="row"><button class="btn ghost" id="cancelAdd">取消</button><button class="btn" id="doAdd">加入</button></div>
+  </div>
+
+  <div class="links">
+    <button id="manual">＋ 自己輸入單字</button>
+    <button id="sent">＋ 整句做成字卡</button>
+  </div>
+
+  <h3>這題你覺得…</h3>
+  <div class="grade">
+    <button class="g-ok" data-g="ok">✅ 正確</button>
+    <button class="g-part" data-g="part">🟡 小錯</button>
+    <button class="g-bad" data-g="bad">❌ 不會</button>
+  </div>`;
+  view.innerHTML = h; bindMode();
+
+  const sel = new Set();
+  const box = document.getElementById('addBox'), term = document.getElementById('term'), mean = document.getElementById('mean');
+  const showBox = () => box.classList.remove('hidden');
+  const hideBox = () => { box.classList.add('hidden'); sel.clear(); document.querySelectorAll('.w.sel').forEach(e=>e.classList.remove('sel')); term.value=''; mean.value=''; };
+  const syncTerm = () => {
+    const t = [...sel].sort((a,b)=>a-b).map(i => words[i].replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g,'')).join(' ');
+    term.value = t; if(t) showBox(); else box.classList.add('hidden');
+  };
+  document.getElementById('ref').onclick = e => {
+    const el = e.target.closest('.w'); if(!el) return;
+    const i = +el.dataset.i;
+    if(sel.has(i)){ sel.delete(i); el.classList.remove('sel'); } else { sel.add(i); el.classList.add('sel'); }
+    syncTerm();
+  };
+  document.getElementById('manual').onclick = () => { hideBox(); showBox(); term.focus(); };
+  document.getElementById('cancelAdd').onclick = hideBox;
+  document.getElementById('doAdd').onclick = () => {
+    const t = clean(term.value); if(!t){ term.focus(); return; }
+    if(S.cards.some(c => c.k==='w' && c.t.toLowerCase()===t.toLowerCase())){ toast('這張字卡已經有了'); hideBox(); return; }
+    S.cards.push({k:'w', t, m:clean(mean.value), id:q.id, ts:Date.now()}); save();
+    toast(`已加入「${t}」`); hideBox(); updateCnt();
+  };
+  document.getElementById('sent').onclick = () => {
+    if(S.cards.some(c => c.k==='s' && c.id===q.id)){ toast('這句已經在字卡裡'); return; }
+    S.cards.push({k:'s', t:q.zh, m:q.en, id:q.id, ts:Date.now()}); save();
+    toast('整句已加入字卡（中文 → 英文）'); updateCnt();
+  };
+  document.querySelectorAll('.grade button').forEach(b => b.onclick = () => grade(q.id, b.dataset.g, mine));
+}
+
+function updateCnt(){
+  const fresh = S.cards.filter(c=>!c.x).length;
+  const cc = document.getElementById('cardCnt'); cc.textContent=fresh; cc.classList.toggle('hidden', !fresh);
+}
+function ensureSkip(id){
+  // in sequential mode, skip should move past this id instead of returning to it
+  if(S.order==='seq'){
+    const next = Q.find(q => q.id > id && !S.rec[q.id]) || Q.find(q => !S.rec[q.id] && q.id!==id);
+    S.cur = next ? {id:next.id, ans:'', shown:false} : null;
+  } else if(S.order==='review'){
+    const wrong = Q.filter(q => S.rec[q.id] && S.rec[q.id].st!=='ok' && q.id!==id);
+    S.cur = wrong.length ? {id:wrong[Math.floor(Math.random()*wrong.length)].id, ans:'', shown:false} : null;
+  }
+  save();
+}
+
+function grade(id, st, ans){
+  const r = S.rec[id] || {n:0};
+  S.rec[id] = {n:r.n+1, st, last:today(), ans};
+  const before = doneToday();
+  S.daily[today()] = before + 1;
+  S.cur = null; save();
+  if(before < S.goal && before+1 >= S.goal) toast(`🎉 今日目標 ${S.goal} 題達成！`);
+  else if(st==='bad') toast('已加入錯題，之後可在「錯題複習」再練');
+  render();
+}
+
+function bindMode(){
+  document.querySelectorAll('#mode button').forEach(b => b.onclick = () => {
+    if(S.order===b.dataset.m) return;
+    S.order = b.dataset.m;
+    if(!S.cur || !S.cur.shown) S.cur = null; // switch question unless mid-review of an answer
+    if(S.order==='review' && S.cur && S.rec[S.cur.id]?.st==='ok') S.cur=null;
+    save(); render();
+  });
+}
+
+/* ---------- cards ---------- */
+function cardDef(c){
+  if(c.k==='s') return c.m;
+  const q = byId[c.id];
+  let d = c.m || (q ? q.zh : '');
+  if(S.withEx && q) d += (d ? ' ｜ ' : '') + 'e.g. ' + q.en;
+  return d;
+}
+function exportText(list){ return list.map(c => clean(c.t)+'\t'+clean(cardDef(c))).join('\n'); }
+
+function renderCards(){
+  const all = S.cards, fresh = all.filter(c=>!c.x);
+  let h = `<h1>字卡</h1>`;
+  if(!all.length){
+    view.innerHTML = h + `<div class="card empty">還沒有字卡。<br>練習時對完答案，點參考答案裡的單字就能加入。</div>`;
+    return;
+  }
+  h += `<div class="card">
+    <h3>Quizlet 匯入格式</h3>
+    <div class="seg" id="which"><button data-w="new" class="on">尚未匯出（${fresh.length}）</button><button data-w="all">全部（${all.length}）</button></div>
+    <pre class="out" id="out"></pre>
+    <button class="btn" id="copy">複製</button>
+    <p class="small" style="margin:10px 0 0">到 Quizlet：建立學習集 → <b>匯入</b> → 貼上 → 「詞語和定義之間」選 <b>Tab</b>、「卡片之間」選 <b>新的一行</b>。</p>
+  </div>
+  <div class="card"><h3>全部字卡（${all.length}）</h3><ul class="clist">` +
+  all.slice().reverse().map(c => `<li><div><div class="t">${esc(c.t)}${c.k==='s'?'<span class="badge">整句</span>':''}${c.x?'<span class="badge">已匯出</span>':''}</div>
+     <div class="d">${esc(c.k==='s' ? c.m : (c.m || '（未填意思）'))} · #${c.id}</div></div>
+     <button class="x" data-ts="${c.ts}" aria-label="刪除">×</button></li>`).join('') +
+  `</ul></div>
+  ${all.some(c=>c.x) ? '<button class="btn ghost" id="clearX">刪除已匯出的字卡</button>' : ''}`;
+  view.innerHTML = h;
+
+  let which = fresh.length ? 'new' : 'all';
+  const out = document.getElementById('out');
+  const list = () => which==='new' ? S.cards.filter(c=>!c.x) : S.cards;
+  const paint = () => {
+    document.querySelectorAll('#which button').forEach(b=>b.classList.toggle('on', b.dataset.w===which));
+    const l = list(); out.textContent = l.length ? exportText(l) : '（沒有尚未匯出的字卡）';
+  };
+  paint();
+  document.querySelectorAll('#which button').forEach(b => b.onclick = () => { which=b.dataset.w; paint(); });
+  document.getElementById('copy').onclick = async () => {
+    const l = list(); if(!l.length){ toast('沒有字卡可以複製'); return; }
+    const ok = await copyText(exportText(l));
+    if(ok){ l.forEach(c=>c.x=true); save(); toast(`已複製 ${l.length} 張，去 Quizlet 貼上吧`); renderCards(); updateCnt(); }
+    else toast('複製失敗，請長按上方文字手動複製');
+  };
+  document.querySelectorAll('.clist .x').forEach(b => b.onclick = () => {
+    S.cards = S.cards.filter(c => String(c.ts)!==b.dataset.ts); save(); renderCards(); updateCnt();
+  });
+  const cx = document.getElementById('clearX');
+  if(cx) cx.onclick = () => { if(confirm('刪除所有已匯出的字卡？')){ S.cards=S.cards.filter(c=>!c.x); save(); renderCards(); updateCnt(); } };
+}
+
+/* ---------- bank ---------- */
+function renderBank(){
+  const recs = Object.values(S.rec);
+  const cnt = st => recs.filter(r=>r.st===st).length;
+  let h = `<h1>題庫</h1>
+  <div class="card stats">
+    <div><b>${recs.length}</b><span>已練 / 200</span></div>
+    <div><b style="color:var(--ok)">${cnt('ok')}</b><span>正確</span></div>
+    <div><b style="color:var(--part)">${cnt('part')}</b><span>小錯</span></div>
+    <div><b style="color:var(--bad)">${cnt('bad')}</b><span>不會</span></div>
+  </div>
+  <div class="card"><p class="small" style="margin:0 0 6px">點題號直接練那一題。顏色是最近一次的自評。</p><div class="grid" id="grid">`;
+  let sec = '';
+  for(const q of Q){
+    if(q.sec!==sec){ sec=q.sec; h += `<div class="sec">${q.id}–${q.id+49}　${esc(sec)}</div>`; }
+    const r = S.rec[q.id];
+    h += `<button data-id="${q.id}" class="${r?r.st:''}">${q.id}</button>`;
+  }
+  h += `</div></div>`;
+  view.innerHTML = h;
+  document.getElementById('grid').onclick = e => {
+    const b = e.target.closest('button[data-id]'); if(!b) return;
+    S.cur = {id:+b.dataset.id, ans:'', shown:false}; save(); tab='practice'; render();
+  };
+}
+
+/* ---------- settings ---------- */
+function renderSettings(){
+  view.innerHTML = `<h1>設定</h1>
+  <div class="card">
+    <h3>每日目標題數</h3>
+    <div class="stepper"><button id="minus">−</button><input id="goal" type="number" inputmode="numeric" min="1" max="200" value="${S.goal}"><button id="plus">＋</button><span class="muted">題 / 天</span></div>
+    <div class="chips" id="presets">${[2,4,6,10,16,20].map(n=>`<button data-n="${n}" class="${S.goal===n?'on':''}">${n}</button>`).join('')}</div>
+    <p class="small" style="margin:10px 0 0">學測一次考 2 題（一組）。每天 ${S.goal} 題，約 ${Math.ceil(200/S.goal)} 天可以刷完一輪。</p>
+  </div>
+  <div class="card">
+    <h3>字卡</h3>
+    <label class="sw"><span>單字卡的定義後面附上例句<br><span class="small">例：round-the-clock → 全天候 ｜ e.g. Convenience stores…</span></span><input type="checkbox" id="withEx" ${S.withEx?'checked':''}></label>
+  </div>
+  <div class="card">
+    <h3>備份與還原</h3>
+    <p class="small" style="margin:0 0 10px">進度只存在這支手機的這個 App 裡。換手機或清除資料前，先複製備份碼存到備忘錄。</p>
+    <div class="row"><button class="btn soft" id="bk">複製備份碼</button><button class="btn soft" id="rs">貼上還原</button></div>
+    <textarea id="rsText" class="hidden" style="margin-top:10px" placeholder="把備份碼貼在這裡"></textarea>
+    <button class="btn hidden" id="rsDo" style="margin-top:8px">還原</button>
+  </div>
+  <button class="btn ghost" id="reset" style="color:var(--bad)">清除所有進度</button>
+  <p class="small" style="text-align:center;margin-top:16px">共 200 題 · 每兩題一組</p>`;
+
+  const g = document.getElementById('goal');
+  const setGoal = n => { n = Math.max(1, Math.min(200, Math.round(+n)||1)); S.goal=n; save(); renderSettings(); };
+  document.getElementById('minus').onclick = () => setGoal(S.goal-1);
+  document.getElementById('plus').onclick = () => setGoal(S.goal+1);
+  g.onchange = () => setGoal(g.value);
+  document.getElementById('presets').onclick = e => { const b=e.target.closest('button'); if(b) setGoal(b.dataset.n); };
+  document.getElementById('withEx').onchange = e => { S.withEx = e.target.checked; save(); };
+  document.getElementById('bk').onclick = async () => toast(await copyText(JSON.stringify(S)) ? '備份碼已複製' : '複製失敗');
+  document.getElementById('rs').onclick = () => { document.getElementById('rsText').classList.remove('hidden'); document.getElementById('rsDo').classList.remove('hidden'); };
+  document.getElementById('rsDo').onclick = () => {
+    try{ const s = JSON.parse(document.getElementById('rsText').value); if(!s || s.v!==1) throw 0;
+      S = Object.assign(defaults(), s); save(); toast('已還原'); render(); }catch(e){ toast('備份碼格式不對'); }
+  };
+  document.getElementById('reset').onclick = () => {
+    if(confirm('確定清除所有練習紀錄和字卡？這無法復原。')){ S = defaults(); save(); toast('已清除'); render(); }
+  };
+}
+
+/* ---------- boot ---------- */
+document.getElementById('tabs').onclick = e => { const b=e.target.closest('button'); if(b){ tab=b.dataset.tab; render(); } };
+// re-render when coming back on a new day
+document.addEventListener('visibilitychange', () => { if(!document.hidden && tab!=='practice') render(); });
+render();
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
